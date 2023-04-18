@@ -1,5 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, time::Instant};
 
+/// The data representation of a cache.
 #[derive(Default)]
 pub struct Cache<K, V> {
     map: HashMap<K, CacheEntry<V>>,
@@ -11,6 +12,11 @@ impl<K, V> Cache<K, V> {
             map: HashMap::new(),
         }
     }
+}
+
+struct CacheEntry<V> {
+    val: V,
+    expires_at: Instant,
 }
 
 impl<K, V> Cacheable<K, V> for Cache<K, V>
@@ -38,7 +44,9 @@ where
     }
 }
 
-/// These actions are implemented as a trait to improve testability.
+/// Actions that a cache can perform.
+// Note that these behaviors are defined on the trait instead of the struct
+// to make end-to-end testing more convenient.
 pub trait Cacheable<K, V> {
     fn insert(&mut self, key: K, val: V, expires_at: Instant);
 
@@ -48,11 +56,6 @@ pub trait Cacheable<K, V> {
         Q: Hash + Eq + ?Sized + 'static;
 
     fn purge_expired(&mut self);
-}
-
-struct CacheEntry<V> {
-    val: V,
-    expires_at: Instant,
 }
 
 #[cfg(test)]

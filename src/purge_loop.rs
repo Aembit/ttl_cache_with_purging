@@ -4,6 +4,8 @@ use tokio::{sync::RwLock, time::Interval};
 
 use crate::cache::Cacheable;
 
+/// Kick-off a loop that will purge expired entries from the cache at a
+/// specified interval.
 pub fn start_purge_loop<C, K, V>(cache: Arc<RwLock<C>>, mut purge_interval: Interval)
 where
     C: Cacheable<K, V> + Send + Sync + 'static,
