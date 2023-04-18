@@ -1,5 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, time::Instant};
 
+#[derive(Default)]
 pub struct Cache<K, V> {
     map: HashMap<K, CacheEntry<V>>,
 }
