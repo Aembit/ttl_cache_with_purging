@@ -28,7 +28,7 @@ pub trait Cacheable<K, V> {
     fn get<Q>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
-        Q: Hash + Eq + ?Sized + 'static;
+        Q: Hash + Eq + ?Sized;
 
     fn purge_expired(&mut self);
 }
@@ -62,22 +62,26 @@ where
 pub(crate) mod test_helpers {
     use std::{borrow::Borrow, hash::Hash, time::Instant};
 
-    use mockall::mock;
-
     use super::Cacheable;
 
-    mock! {
-        pub Cache<K: 'static, V: 'static> {}
+    #[derive(Default)]
+    pub(crate) struct SpyCache {
+        pub purge_expired_called: bool,
+    }
 
-        impl<K , V> Cacheable<K, V> for Cache<K, V> {
-            fn purge_expired(&mut self) {}
+    impl<K, V> Cacheable<K, V> for SpyCache {
+        fn insert(&mut self, _key: K, _val: V, _expires_at: Instant) {}
 
-            fn get<Q>(&self, key: &Q) -> Option<&'static V>
-            where
-                K: Borrow<Q>,
-                Q: Hash + Eq + ?Sized + 'static, {}
+        fn get<Q>(&self, _key: &Q) -> Option<&V>
+        where
+            K: Borrow<Q>,
+            Q: Hash + Eq + ?Sized,
+        {
+            Default::default()
+        }
 
-            fn insert(&mut self, key: K, val: V, expires_at: Instant) {}
+        fn purge_expired(&mut self) {
+            self.purge_expired_called = true;
         }
     }
 }
