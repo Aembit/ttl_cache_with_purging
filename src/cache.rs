@@ -19,6 +19,20 @@ struct CacheEntry<V> {
     expires_at: Instant,
 }
 
+/// Actions that a cache can perform.
+// Note that these behaviors are defined on the trait instead of the struct
+// to make end-to-end testing more convenient.
+pub trait Cacheable<K, V> {
+    fn insert(&mut self, key: K, val: V, expires_at: Instant);
+
+    fn get<Q>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized + 'static;
+
+    fn purge_expired(&mut self);
+}
+
 impl<K, V> Cacheable<K, V> for Cache<K, V>
 where
     K: Eq + Hash,
@@ -42,20 +56,6 @@ where
         let now = Instant::now();
         self.map.retain(|_k, v| now < v.expires_at)
     }
-}
-
-/// Actions that a cache can perform.
-// Note that these behaviors are defined on the trait instead of the struct
-// to make end-to-end testing more convenient.
-pub trait Cacheable<K, V> {
-    fn insert(&mut self, key: K, val: V, expires_at: Instant);
-
-    fn get<Q>(&self, key: &Q) -> Option<&V>
-    where
-        K: Borrow<Q>,
-        Q: Hash + Eq + ?Sized + 'static;
-
-    fn purge_expired(&mut self);
 }
 
 #[cfg(test)]
