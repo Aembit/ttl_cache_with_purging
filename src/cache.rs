@@ -30,6 +30,11 @@ pub trait Cacheable<K, V> {
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized;
 
+    fn get_value_and_expiration<Q>(&self, key: &Q) -> Option<(&V, Instant)>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized;
+
     fn purge_expired(&mut self);
 }
 
@@ -46,10 +51,19 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        match self.map.get(key) {
-            Some(entry) if entry.expires_at > Instant::now() => Some(&entry.val),
-            _ => None,
-        }
+        self.get_value_and_expiration(key)
+            .map(|(val, _expires_at)| val)
+    }
+
+    fn get_value_and_expiration<Q>(&self, key: &Q) -> Option<(&V, Instant)>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
+        self.map
+            .get(key)
+            .filter(|e| e.expires_at > Instant::now())
+            .map(|e| (&e.val, e.expires_at))
     }
 
     fn purge_expired(&mut self) {
@@ -73,6 +87,14 @@ pub(crate) mod test_helpers {
         fn insert(&mut self, _key: K, _val: V, _expires_at: Instant) {}
 
         fn get<Q>(&self, _key: &Q) -> Option<&V>
+        where
+            K: Borrow<Q>,
+            Q: Hash + Eq + ?Sized,
+        {
+            Default::default()
+        }
+
+        fn get_value_and_expiration<Q>(&self, _key: &Q) -> Option<(&V, Instant)>
         where
             K: Borrow<Q>,
             Q: Hash + Eq + ?Sized,
@@ -106,12 +128,15 @@ mod tests {
     fn when_adding_an_active_entry_to_the_cache_then_it_is_present() {
         // Arrange
         let mut cache = Cache::new();
+        let key = "key";
+        let val = "val";
 
         // Act
-        cache.insert("key", "val", *UNEXPIRED_INSTANT);
+        cache.insert(key, val, *UNEXPIRED_INSTANT);
 
         // Assert
-        assert_eq!(*cache.get("key").unwrap(), "val");
+        assert_eq!(*cache.get(key).unwrap(), val);
+        assert_eq!(*cache.get_value_and_expiration(key).unwrap().0, val);
     }
 
     #[test]
@@ -145,9 +170,11 @@ mod tests {
 
         // Act
         let val = cache.get(key);
+        let val_with_expiration = cache.get_value_and_expiration(key);
 
         // Assert
-        assert!(val.is_none())
+        assert!(val.is_none());
+        assert!(val_with_expiration.is_none());
     }
 
     #[test]
