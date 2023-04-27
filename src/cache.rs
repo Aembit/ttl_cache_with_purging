@@ -135,8 +135,8 @@ mod tests {
         cache.insert(key, val, *UNEXPIRED_INSTANT);
 
         // Assert
-        assert_eq!(*cache.get("key").unwrap(), val);
-        assert_eq!(*cache.get_value_and_expiration("key").unwrap().0, val);
+        assert_eq!(*cache.get(key).unwrap(), val);
+        assert_eq!(*cache.get_value_and_expiration(key).unwrap().0, val);
     }
 
     #[test]
