@@ -1,14 +1,21 @@
 [package]
 name = "ttl-cache"
+authors = ["Will-Low <26700668+Will-Low@users.noreply.github.com>"]
 version = "0.1.0"
 edition = "2021"
+description = "A time-to-live (TTL) cache implementation with optional background purging for expired entries."
+readme = "README.md"
+homepage = "https://aembit.io/"
+repository = "https://github.com/Aembit/ttl-cache/"
+license = "MIT OR Apache-2.0"
+keywords = ["ttl", "cache", "caching", "expire", "expiring"]
+categories = ["caching", "asynchronous"]
+
+[badges]
+maintenance = { status = "passively-maintained"}
 
 [dependencies]
 tokio = { version = "1", features = ["macros", "rt", "sync", "time"]}
 
 [dev-dependencies]
 lazy_static = "1.4.0"
-
-[features]
-default = ["purging"]
-purging = []
