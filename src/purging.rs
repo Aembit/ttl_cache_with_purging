@@ -1,16 +1,15 @@
-use std::{hash::Hash, sync::Arc};
+//! Strategies for purging expired cache entries.
+use std::sync::Arc;
 
 use tokio::{sync::RwLock, time::Interval};
 
-use crate::cache::Cacheable;
+use crate::cache::Purgeable;
 
-/// Kick-off a loop that will purge expired entries from the cache at a
+/// Kick-off a background task that will purge expired entries from the cache at the
 /// specified interval.
-pub fn start_purge_loop<C, K, V>(cache: Arc<RwLock<C>>, mut purge_interval: Interval)
+pub fn start_periodic_purge<P>(cache: Arc<RwLock<P>>, mut purge_interval: Interval)
 where
-    C: Cacheable<K, V> + Send + Sync + 'static,
-    K: Eq + Hash + Send + Sync,
-    V: Send + Sync,
+    P: Purgeable + Send + Sync + 'static,
 {
     tokio::task::spawn(async move {
         loop {
@@ -30,7 +29,7 @@ mod tests {
     use tokio::time::{interval, sleep};
 
     use crate::cache::test_helpers::SpyCache;
-    use crate::purge_loop::start_purge_loop;
+    use crate::purging::start_periodic_purge;
 
     #[tokio::test]
     async fn when_the_purge_loop_runs_then_the_cache_deletes_expired_entries() {
@@ -38,10 +37,7 @@ mod tests {
         let cache = Arc::new(RwLock::new(SpyCache::default()));
 
         // Act
-        start_purge_loop::<SpyCache, String, String>(
-            cache.clone(),
-            interval(Duration::from_secs(10000)),
-        );
+        start_periodic_purge(cache.clone(), interval(Duration::from_secs(10000)));
 
         // Assert
         sleep(Duration::from_millis(1)).await;

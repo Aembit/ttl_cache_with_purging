@@ -8,3 +8,7 @@ tokio = { version = "1", features = ["macros", "rt", "sync", "time"]}
 
 [dev-dependencies]
 lazy_static = "1.4.0"
+
+[features]
+default = ["purging"]
+purging = []
