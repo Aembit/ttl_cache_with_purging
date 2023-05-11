@@ -5,7 +5,7 @@ use tokio::{sync::RwLock, time::Interval};
 
 use crate::cache::Purgeable;
 
-/// Kick-off a background thread that will purge expired entries from the cache at the
+/// Kick-off a background task that will purge expired entries from the cache at the
 /// specified interval.
 pub fn start_periodic_purge<P>(cache: Arc<RwLock<P>>, mut purge_interval: Interval)
 where
