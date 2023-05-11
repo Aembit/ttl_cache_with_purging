@@ -1,23 +1,3 @@
-# ttl-cache
-
-A time-to-live (TTL) cache implementation with optional background purging
-for expired entries.
-
-## Motivation
-
-We needed a caching implementation that would not return expired entries,
-while also preventing expired entries from unnecessarily inflating the cache
-size.
-
-## Approach
-
-This TTL cache includes a background purge thread that will remove expired
-cache entries on a specified interval. The purge thread uses `tokio` to take
-advantage of its write-preferring `RwLock`.
-
-## Example
-
-```rust
 use std::{
     sync::Arc,
     time::{Duration, Instant},
@@ -49,4 +29,3 @@ async fn main() {
     let _cached_val = cache.read().await.get(key).unwrap();
     let (_cached_val, _expires_at) = cache.read().await.get_value_and_expiration(key).unwrap();
 }
-```
