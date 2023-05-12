@@ -1,4 +1,4 @@
-# ttl-cache
+# ttl_cache_with_purging
 
 A time-to-live (TTL) cache implementation with optional background purging
 for expired entries.
@@ -24,7 +24,7 @@ use std::{
 };
 
 use tokio::{sync::RwLock, time::interval};
-use ttl_cache::{cache::TtlCache, purging::start_periodic_purge};
+use ttl_cache_with_purging::{cache::TtlCache, purging::start_periodic_purge};
 
 const MIN_IN_SECS: u64 = 60;
 const HOUR_IN_SECS: u64 = 60 * MIN_IN_SECS;
