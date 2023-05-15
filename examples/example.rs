@@ -1,6 +1,6 @@
 use std::{
     sync::Arc,
-    time::{Duration, Instant},
+    time::{Duration, SystemTime},
 };
 
 use tokio::{sync::RwLock, time::interval};
@@ -20,7 +20,7 @@ async fn main() {
     let key = "key1";
     let val = "val1";
 
-    let expires_at = Instant::now()
+    let expires_at = SystemTime::now()
         .checked_add(Duration::from_secs(HOUR_IN_SECS))
         .unwrap();
     cache.write().await.insert(key, val, expires_at);

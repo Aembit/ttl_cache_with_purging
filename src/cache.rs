@@ -1,5 +1,5 @@
 //! Standard cache operations.
-use std::{borrow::Borrow, collections::HashMap, hash::Hash, time::Instant};
+use std::{borrow::Borrow, collections::HashMap, hash::Hash, time::SystemTime};
 
 /// An instance of a cache.
 #[derive(Default)]
@@ -9,7 +9,7 @@ pub struct TtlCache<K, V> {
 
 struct CacheEntry<V> {
     val: V,
-    expires_at: Instant,
+    expires_at: SystemTime,
 }
 
 impl<K, V> TtlCache<K, V>
@@ -23,8 +23,8 @@ where
         }
     }
 
-    /// Adds a new value to the cache that will expire at the specified instant.
-    pub fn insert(&mut self, key: K, val: V, expires_at: Instant) {
+    /// Adds a new value to the cache that will expire at the specified time.
+    pub fn insert(&mut self, key: K, val: V, expires_at: SystemTime) {
         self.map.insert(key, CacheEntry { val, expires_at });
     }
 
@@ -43,14 +43,14 @@ where
     /// Retrieves an unexpired value from the cache, along with the expiration.
     ///
     /// Expired entries will return `None`.
-    pub fn get_value_and_expiration<Q>(&self, key: &Q) -> Option<(&V, Instant)>
+    pub fn get_value_and_expiration<Q>(&self, key: &Q) -> Option<(&V, SystemTime)>
     where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
         self.map
             .get(key)
-            .filter(|e| e.expires_at > Instant::now())
+            .filter(|e| e.expires_at > SystemTime::now())
             .map(|e| (&e.val, e.expires_at))
     }
 }
@@ -65,7 +65,7 @@ pub trait Purgeable {
 
 impl<K, V> Purgeable for TtlCache<K, V> {
     fn purge_expired(&mut self) {
-        let now = Instant::now();
+        let now = SystemTime::now();
         self.map.retain(|_k, v| now < v.expires_at)
     }
 }
@@ -89,18 +89,19 @@ pub(crate) mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{Duration, Instant};
+    use std::time::{Duration, SystemTime};
 
     use lazy_static::lazy_static;
 
     use crate::cache::{Purgeable, TtlCache};
 
     lazy_static! {
-        static ref UNEXPIRED_INSTANT: Instant = Instant::now()
+        static ref UNEXPIRED_TIME: SystemTime = SystemTime::now()
             .checked_add(Duration::from_secs(86400))
             .unwrap();
-        static ref EXPIRED_INSTANT: Instant =
-            Instant::now().checked_sub(Duration::from_secs(10)).unwrap();
+        static ref EXPIRED_TIME: SystemTime = SystemTime::now()
+            .checked_sub(Duration::from_secs(10))
+            .unwrap();
     }
 
     #[test]
@@ -111,7 +112,7 @@ mod tests {
         let val = "val";
 
         // Act
-        cache.insert(key, val, *UNEXPIRED_INSTANT);
+        cache.insert(key, val, *UNEXPIRED_TIME);
 
         // Assert
         assert_eq!(*cache.get(key).unwrap(), val);
@@ -127,14 +128,14 @@ mod tests {
         cache.insert(
             key,
             "val1",
-            Instant::now()
+            SystemTime::now()
                 .checked_add(Duration::from_secs(1000))
                 .unwrap(),
         );
         let value_to_overwrite_with = "val2";
 
         // Act
-        cache.insert(key, value_to_overwrite_with, *UNEXPIRED_INSTANT);
+        cache.insert(key, value_to_overwrite_with, *UNEXPIRED_TIME);
 
         // Assert
         assert_eq!(*cache.get(key).unwrap(), value_to_overwrite_with);
@@ -145,7 +146,7 @@ mod tests {
         // Arrange
         let mut cache = TtlCache::new();
         let key = "key";
-        cache.insert(key, "val", *EXPIRED_INSTANT);
+        cache.insert(key, "val", *EXPIRED_TIME);
 
         // Act
         let val = cache.get(key);
@@ -163,8 +164,8 @@ mod tests {
         let mut cache = TtlCache::new();
         let unexpired = "unexpired";
         let expired = "expired";
-        cache.insert(unexpired, "val1", *UNEXPIRED_INSTANT);
-        cache.insert(expired, "val2", *EXPIRED_INSTANT);
+        cache.insert(unexpired, "val1", *UNEXPIRED_TIME);
+        cache.insert(expired, "val2", *EXPIRED_TIME);
 
         // Act
         cache.purge_expired();
