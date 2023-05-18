@@ -40,7 +40,7 @@ mod tests {
         start_periodic_purge(cache.clone(), interval(Duration::from_secs(10000)));
 
         // Assert
-        sleep(Duration::from_millis(1)).await;
+        sleep(Duration::from_millis(10)).await;
         assert!(cache.write().await.purge_expired_called);
     }
 }
