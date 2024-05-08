@@ -1,5 +1,7 @@
 //! Standard cache operations.
-use std::{borrow::Borrow, collections::HashMap, hash::Hash, time::SystemTime};
+use std::{borrow::Borrow, collections::HashMap, hash::Hash};
+
+use tokio::time::Instant;
 
 /// An instance of a cache.
 #[derive(Default)]
@@ -9,7 +11,7 @@ pub struct TtlCache<K, V> {
 
 struct CacheEntry<V> {
     val: V,
-    expires_at: SystemTime,
+    expires_at: Instant,
 }
 
 impl<K, V> TtlCache<K, V>
@@ -24,7 +26,7 @@ where
     }
 
     /// Adds a new value to the cache that will expire at the specified time.
-    pub fn insert(&mut self, key: K, val: V, expires_at: SystemTime) {
+    pub fn insert(&mut self, key: K, val: V, expires_at: Instant) {
         self.map.insert(key, CacheEntry { val, expires_at });
     }
 
@@ -43,14 +45,14 @@ where
     /// Retrieves an unexpired value from the cache, along with the expiration.
     ///
     /// Expired entries will return `None`.
-    pub fn get_value_and_expiration<Q>(&self, key: &Q) -> Option<(&V, SystemTime)>
+    pub fn get_value_and_expiration<Q>(&self, key: &Q) -> Option<(&V, Instant)>
     where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
         self.map
             .get(key)
-            .filter(|e| e.expires_at > SystemTime::now())
+            .filter(|e| e.expires_at > Instant::now())
             .map(|e| (&e.val, e.expires_at))
     }
 }
@@ -65,7 +67,7 @@ pub trait Purgeable {
 
 impl<K, V> Purgeable for TtlCache<K, V> {
     fn purge_expired(&mut self) {
-        let now = SystemTime::now();
+        let now = Instant::now();
         self.map.retain(|_k, v| now < v.expires_at)
     }
 }
@@ -89,19 +91,19 @@ pub(crate) mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{Duration, SystemTime};
+    use std::time::Duration;
 
     use lazy_static::lazy_static;
+    use tokio::time::Instant;
 
     use crate::cache::{Purgeable, TtlCache};
 
     lazy_static! {
-        static ref UNEXPIRED_TIME: SystemTime = SystemTime::now()
+        static ref UNEXPIRED_TIME: Instant = Instant::now()
             .checked_add(Duration::from_secs(86400))
             .unwrap();
-        static ref EXPIRED_TIME: SystemTime = SystemTime::now()
-            .checked_sub(Duration::from_secs(10))
-            .unwrap();
+        static ref EXPIRED_TIME: Instant =
+            Instant::now().checked_sub(Duration::from_secs(10)).unwrap();
     }
 
     #[test]
@@ -128,7 +130,7 @@ mod tests {
         cache.insert(
             key,
             "val1",
-            SystemTime::now()
+            Instant::now()
                 .checked_add(Duration::from_secs(1000))
                 .unwrap(),
         );

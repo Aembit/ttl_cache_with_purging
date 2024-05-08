@@ -18,12 +18,12 @@ advantage of its write-preferring `RwLock`.
 ## Example
 
 ```rust
-use std::{
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
+use std::{sync::Arc, time::Duration};
 
-use tokio::{sync::RwLock, time::interval};
+use tokio::{
+    sync::RwLock,
+    time::{interval, Instant},
+};
 use ttl_cache_with_purging::{cache::TtlCache, purging::start_periodic_purge};
 
 const MIN_IN_SECS: u64 = 60;
@@ -40,7 +40,7 @@ async fn main() {
     let key = "key1";
     let val = "val1";
 
-    let expires_at = SystemTime::now()
+    let expires_at = Instant::now()
         .checked_add(Duration::from_secs(HOUR_IN_SECS))
         .unwrap();
     cache.write().await.insert(key, val, expires_at);
