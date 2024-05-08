@@ -1,7 +1,5 @@
 //! Standard cache operations.
-use std::{borrow::Borrow, collections::HashMap, hash::Hash};
-
-use tokio::time::Instant;
+use std::{borrow::Borrow, collections::HashMap, hash::Hash, time::Instant};
 
 /// An instance of a cache.
 #[derive(Default)]
@@ -91,10 +89,9 @@ pub(crate) mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    use std::time::{Duration, Instant};
 
     use lazy_static::lazy_static;
-    use tokio::time::Instant;
 
     use crate::cache::{Purgeable, TtlCache};
 
