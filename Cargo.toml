@@ -10,6 +10,10 @@ repository = "https://github.com/Aembit/ttl_cache_with_purging"
 license = "MIT OR Apache-2.0"
 keywords = ["ttl", "cache", "caching", "expire", "expiring"]
 categories = ["caching", "asynchronous"]
+exclude = [
+    ".github",
+    ".gitignore"
+]
 
 [badges]
 maintenance = { status = "passively-maintained"}
